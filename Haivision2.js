@@ -1,5 +1,5 @@
 /*
-Haivision HMP IPTV - STB Control Macro  v0.1
+Haivision HMP IPTV - STB Control Macro  v0.2
 
 Purpose: Cisco RoomOS macro to control a Haivision Play 2000/4000 Set-Top Box
 through the Haivision Media Platform (HMP) REST API from a Cisco video device.
@@ -50,6 +50,7 @@ const LOGIN_RETRY = 30;                     // seconds to wait before retrying a
 const MAX_CHANNELS = 200;                    // safety cap on channels rendered
 const TURN_ON_HTTP_CLIENT = true;            // auto-enable HttpClient mode on startup
 const RANDOM_START_RANGE = 1;              // seconds; staggers fleet logins so HMP isn't flooded.
+const HDMI_INPUT = 2; // HDMI input the Haivision is connected to
 
 const PANEL_LOCATION = 'ControlPanel';  // 'ControlPanel', 'HomeScreen', 'CallControls', 'HomeScreenAndCallControls' - use 'ControlPanel' for MTR devices
 
@@ -68,6 +69,7 @@ const PANEL_ICON = 'Tv';
 const PANEL_COLOR = '#005F9E';
 const PANEL_ORDER = 1;
 const FEEDBACK_ID_FILTER = 'feedback_hmp_filter';
+const PAGEID_PREFIX = 'pageid_hmp'; 
 
 let sessionCookie = AUTH_MODE === 'cookie' ? hmp_cookie : '';
 let allChannels = [];   // [{ id, name, type }]
@@ -649,13 +651,22 @@ Panel opened -> refresh state and channels (mirrors z-band panelClicked)
 ─────────────────────────────────────────────────────────────────────────────
 */
 xapi.Event.UserInterface.Extensions.Panel.Clicked.on(event => {
+
   if (event.PanelId !== PANEL_ID) return;
-  xapi.Command.UserInterface.Extensions.Panel.Open({ PanelId: PANEL_ID, PageId: PAGE_TV_ID }).catch(() => { });
+
+  xapi.Command.Presentation.Start({ ConnectorId: HDMI_INPUT });
+
+ //  xapi.Command.UserInterface.Extensions.Panel.Open({ PanelId: PANEL_ID, PageId: PAGE_TV_ID }).catch(() => { });
   fetchStbState()
     .then(fetchChannels)
     .then(() => { computeFavorites(); buildPanel(allChannels); });
 });
 
+xapi.Event.UserInterface.Extensions.Event.PageClosed.on(event =>{
+  if(event.PageId.startsWith(PAGEID_PREFIX)){
+    stopPresentationShare(); 
+  } 
+} );
 /*
 ─────────────────────────────────────────────────────────────────────────────
 Helpers
@@ -676,3 +687,11 @@ function xmlEscape(s) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
 }
+
+function stopPresentationShare(){
+  xapi.Command.Presentation.Stop();
+}; 
+
+xapi.Event.OutgoingCallIndication.on(stopPresentationShare);
+xapi.Event.IncomingCallIndication.on(stopPresentationShare);
+xapi.Event.CallSuccessful.on(stopPresentationShare);
