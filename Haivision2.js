@@ -1,5 +1,5 @@
 /*
-Haivision HMP IPTV - STB Control Macro  v0.2
+Haivision HMP IPTV - STB Control Macro  v0.3
 
 Purpose: Cisco RoomOS macro to control a Haivision Play 2000/4000 Set-Top Box
 through the Haivision Media Platform (HMP) REST API from a Cisco video device.
@@ -26,9 +26,8 @@ Storing only what differs per room (e.g. just hmp_stb) is recommended.
 // "True" or "False" as TEXT. Recommended "False" with a valid HMP certificate.
 const ALLOW_INSECURE_HTTPS = 'True';
 
-let hmp_host = 'http://192.168.1.116:8443';   // hmp_host IP address no trailing slash
+let hmp_host = 'http://192.168.1.116:8443';   // hmp_host IP address no trailing slash, no port number
 let hmp_stb = 'bvgR95DKAXUTr402cyM8ew';       // _id from GET /apis/devices/stbs
-// let hmp_stb = 'bxxxxx';       // _id from GET /apis/devices/stbs
 let hmp_user = 'haiadmin'; // update user 
 let hmp_pass = 'haiadmin'; // update password
 let hmp_fav = 'Channel 04,ESPN,BBC World';        // comma-separated favorite source names (max 10)
@@ -695,3 +694,4 @@ function stopPresentationShare(){
 xapi.Event.OutgoingCallIndication.on(stopPresentationShare);
 xapi.Event.IncomingCallIndication.on(stopPresentationShare);
 xapi.Event.CallSuccessful.on(stopPresentationShare);
+
